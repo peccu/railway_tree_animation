@@ -7,20 +7,36 @@
 body {
 	margin: 0;
 	padding: 0;
+    background: darkslategray;
 }
 </style>
 <script type="text/javascript">
 // 2017.1.15  Jun Mitani
 
 	const UNIT_LENGTH = 50; 
-	const POINT_R = 0.8;
+	const POINT_R = 1.5;
 	const TIME_INTERVAL_MS = 50;
 
 	var DEPTH_LIMIT = 4; // 再帰の深さ
 	var bDrawPoint = true; // 点の描画の有無
 	var bDrawLine = true;// 経路の描画の有無
 	var drawItemArry = [];
-	
+	    
+    function getRailColor(depth) {
+      const START_COLOR = [200, 0, 50];
+      const END_COLOR = [220, 255, 50];
+      var rgba_str = 'rgba(';
+      var col, j;
+      for (j=0; j<3; j++) {
+        col = Math.round(START_COLOR[j] + depth/(DEPTH_LIMIT-1) * (END_COLOR[j]-START_COLOR[j]));
+        rgba_str += col.toString();
+        rgba_str += ", ";
+      }
+      rgba_str += "1.0)";
+      //console.log("depth=" + depth + ", rgba_str= " + rgba_str);
+      return rgba_str;
+    }
+    
 	function drawTree(ctx, type, angleIN, startX, startY, depth) {
 		
 		if(type == "R") {
@@ -33,7 +49,7 @@ body {
 			startY = cy + UNIT_LENGTH * Math.sin((angleIN + 45) * Math.PI / 180.0);
 			angleIN -= 45;
 			if(bDrawLine) {
-				drawItemArry.push([2, cx, cy, startX, startY, sa, ea ]);
+				drawItemArry.push([2, cx, cy, startX, startY, sa, ea, depth]);
 			}
 
 		} else if(type == "L") {
@@ -46,7 +62,7 @@ body {
 			startY = cy + UNIT_LENGTH * Math.sin((angleIN - 45) * Math.PI / 180.0);
 			angleIN += 45;		
 			if(bDrawLine) {
-				drawItemArry.push([1, cx, cy, startX, startY, sa, ea]);
+				drawItemArry.push([1, cx, cy, startX, startY, sa, ea, depth]);
 			}
 			
 		} else if(type == "S") {
@@ -57,7 +73,7 @@ body {
 			var ey = sy + l * Math.sin(angleIN * Math.PI / 180.0);
 
 			if(bDrawLine) {
-				drawItemArry.push([0, sx, sy, ex, ey]);
+				drawItemArry.push([0, sx, sy, ex, ey, depth]);
 			}
 
 			startX = ex;
@@ -118,12 +134,16 @@ body {
 			var ex = (1-s2) * e[1] + s2*e[3];
 			var ey = (1-s2) * e[2] + s2*e[4];
 			ctx.moveTo(sx, sy);
+			ctx.strokeStyle = getRailColor(e[5]);
+            ctx.lineWidth = (DEPTH_LIMIT - e[5]) * 2;
 			ctx.lineTo(ex, ey);
 			ctx.stroke();
 		} else {
 			ctx.beginPath();
 			var da = (1-s) * e[5] + s*e[6];
 			var db = (1-s2) * e[5] + s2*e[6];
+			ctx.strokeStyle = getRailColor(e[7]);
+            ctx.lineWidth = (DEPTH_LIMIT - e[7]) * 2;
 			ctx.arc(e[1], e[2], UNIT_LENGTH, da, db, e[0] == 2);
 			ctx.stroke();
 		}
@@ -150,10 +170,10 @@ body {
 		
 		if (canvas.getContext) {
 			ctx = canvas.getContext('2d');
-			ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-			ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+			ctx.strokeStyle = 'rgba(200, 250, 200, 0.5)';
+			ctx.fillStyle = 'rgba(0, 250, 200, 0.2)';
 			makeTree();
-			ctx.fillStyle = 'rgba(0, 0, 0, 1)';
+			ctx.fillStyle = 'rgba(25, 200, 0, 1)'; // color of circles
 
 			currentPathID = 0;
 			step = 0;
